@@ -47,23 +47,26 @@
     const db = getFirestore(app);
 
   
-    window.processLike = async (id) => {
+window.processLike = async (id) => {
         const docRef = doc(db, "requests", id);
         try {
             await updateDoc(docRef, { likes: increment(1) });
         } catch (e) {
             console.error("Ошибка обновления:", e.message);
         }
-        window.removePost = async (id) => {
-    if(confirm("Вы уверены?")) {
-        await deleteDoc(doc(db, "requests", id));
-    }
-};
+    }; 
 
-window.clearInputs = () => {
-    document.getElementById('name').value = "";
-    document.getElementById('email').value = "";
-};
+ 
+    window.removePost = async (id) => { 
+        if(confirm("Вы уверены?")) {
+            await deleteDoc(doc(db, "requests", id));
+        }
+    };
+
+ 
+    window.clearInputs = () => {
+        document.getElementById('name').value = "";
+        document.getElementById('email').value = "";
     };
 
     
