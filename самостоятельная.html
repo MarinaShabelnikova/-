@@ -30,9 +30,9 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
     import { 
-        getFirestore, collection, addDoc, query, orderBy, onSnapshot, 
-        serverTimestamp, updateDoc, doc, increment 
-    } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+    getFirestore, collection, addDoc, query, orderBy, onSnapshot, 
+    serverTimestamp, updateDoc, doc, increment, deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
     const firebaseConfig = { 
         apiKey: "AIzaSyB-8dlbw4l69np4yIapFr0OXJi8VbH32_U",
@@ -54,6 +54,16 @@
         } catch (e) {
             console.error("Ошибка обновления:", e.message);
         }
+        window.removePost = async (id) => {
+    if(confirm("Вы уверены?")) {
+        await deleteDoc(doc(db, "requests", id));
+    }
+};
+
+window.clearInputs = () => {
+    document.getElementById('name').value = "";
+    document.getElementById('email').value = "";
+};
     };
 
     
@@ -88,14 +98,16 @@
         snapshot.forEach((doc) => {
             const data = doc.data();
             const time = data.timestamp ? data.timestamp.toDate().toLocaleTimeString() : "...";
-            feed.innerHTML += `
-                <div class="post">
-                    <span class="time">${time}</span>
-                    <b>${data.name}</b>
-                    <p style="margin: 5px 0;">${data.email}</p>
-                    <button class="like-btn" onclick="processLike('${doc.id}')">👍 ${data.likes || 0}</button>
-                </div>
-            `;
+           feed.innerHTML += `
+    <div class="post">
+        <span class="time">${time}</span>
+        <b>${data.name}</b>
+        <p>${data.email}</p>
+        <button class="like-btn" onclick="processLike('${doc.id}')">👍 ${data.likes || 0}</button>
+        <button class="like-btn" style="color:red" onclick="removePost('${doc.id}')">🗑 Удалить</button>
+        <button class="like-btn" onclick="clearInputs()">🧹 Очистить</button>
+    </div>
+`;
         });
     });
 </script>
