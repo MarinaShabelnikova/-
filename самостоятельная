@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Мой облачный проект</title>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f4f7f6; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .container { width: 100%; max-width: 500px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        button#mainBtn { background: #007bff; color: white; border: none; padding: 12px; border-radius: 6px; width: 100%; font-weight: 600; cursor: pointer; transition: 0.3s; }
+        button#mainBtn:hover { background: #0056b3; }
+        button#mainBtn:disabled { background: #ccc; }
+        .post { background: #fff; border: 1px solid #eaeaea; padding: 15px; margin-top: 15px; border-radius: 8px; width: 100%; max-width: 500px; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .like-btn { cursor: pointer; border: none; background: #f8f9fa; padding: 5px 12px; border-radius: 20px; font-size: 14px; transition: 0.2s; margin-top: 10px; }
+        .like-btn:hover { background: #e2e6ea; }
+        .time { font-size: 11px; color: #999; float: right; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h3>Отправить заявку</h3>
+    <input type="text" id="name" placeholder="Ваше имя">
+    <input type="email" id="email" placeholder="Ваш Email">
+    <button id="mainBtn">Отправить в облако</button>
+</div>
+
+<div id="feed" style="width: 100%; max-width: 500px;"></div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+    import { 
+        getFirestore, collection, addDoc, query, orderBy, onSnapshot, 
+        serverTimestamp, updateDoc, doc, increment 
+    } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
+    const firebaseConfig = { 
+        apiKey: "AIzaSyB-8dlbw4l69np4yIapFr0OXJi8VbH32_U",
+        authDomain: "index-48da6.firebaseapp.com",
+        projectId: "index-48da6",
+        storageBucket: "index-48da6.firebasestorage.app",
+        messagingSenderId: "830178181196", 
+        appId: "1:830178181196:web:f6203bd9d8bbd4613c34e9" 
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+  
+    window.processLike = async (id) => {
+        const docRef = doc(db, "requests", id);
+        try {
+            await updateDoc(docRef, { likes: increment(1) });
+        } catch (e) {
+            console.error("Ошибка обновления:", e.message);
+        }
+    };
+
+    
+    document.getElementById('mainBtn').onclick = async () => {
+        const btn = document.getElementById('mainBtn');
+        const nameInput = document.getElementById('name');
+        const emailInput = document.getElementById('email');
+
+        if(!nameInput.value || !emailInput.value) return alert("Заполните поля!");
+
+        btn.disabled = true;
+        try {
+            await addDoc(collection(db, "requests"), {
+                name: nameInput.value,
+                email: emailInput.value,
+                likes: 0,
+                timestamp: serverTimestamp()
+            });
+            nameInput.value = "";
+            emailInput.value = "";
+        } catch (e) {
+            alert("Ошибка безопасности: Данные отклонены сервером.");
+        }
+        btn.disabled = false;
+    };
+
+
+    const q = query(collection(db, "requests"), orderBy("timestamp", "desc"));
+    onSnapshot(q, (snapshot) => {
+        const feed = document.getElementById('feed');
+        feed.innerHTML = "";
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            const time = data.timestamp ? data.timestamp.toDate().toLocaleTimeString() : "...";
+            feed.innerHTML += `
+                <div class="post">
+                    <span class="time">${time}</span>
+                    <b>${data.name}</b>
+                    <p style="margin: 5px 0;">${data.email}</p>
+                    <button class="like-btn" onclick="processLike('${doc.id}')">👍 ${data.likes || 0}</button>
+                </div>
+            `;
+        });
+    });
+</script>
+</body>
+</html>
